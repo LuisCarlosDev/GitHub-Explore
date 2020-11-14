@@ -1,55 +1,67 @@
-import React from 'react';
+import React, { useState, FormEvent } from 'react';
 
 import { FiChevronRight } from 'react-icons/fi';
+
+import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 
 import { Title, Form, Repositories } from './styles';
 
-const Dashboard: React.FC = () => (
-  <>
-    <img src={logoImg} alt="Github Explorer" />
-    <Title>Explore repositórios no Github</Title>
+interface Repository {
+  full_name: string;
+  description: string;
+  owner: {
+    login: string;
+    avatar_url: string
+  }
+}
 
-    <Form>
-      <input placeholder="Digite o nome repositório" />
-      <button type="submit">Pesquisar</button>
-    </Form>
-    ,
+const Dashboard: React.FC = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>([]);
 
-    <Repositories>
-      <a href="teste">
-        <img src="https://avatars2.githubusercontent.com/u/64341830?s=460&u=f804c15dcb7958e6651ab000093c6685c0ab7e45&v=4" alt="Luis Carlos" />
+  async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
 
-        <div>
-          <strong>Happy-Backend</strong>
-          <p>Backend developed on the 3rd of the next level week of Rocketseat.</p>
-        </div>
+    const response = await api.get<Repository>(`repos/${newRepo}`);
 
-        <FiChevronRight size={20} />
-      </a>
-      <a href="teste">
-        <img src="https://avatars2.githubusercontent.com/u/64341830?s=460&u=f804c15dcb7958e6651ab000093c6685c0ab7e45&v=4" alt="Luis Carlos" />
+    const repository = response.data;
 
-        <div>
-          <strong>Happy-Backend</strong>
-          <p>Backend developed on the 3rd of the next level week of Rocketseat.</p>
-        </div>
+    setRepositories([...repositories, repository]);
+    setNewRepo('');
+  }
 
-        <FiChevronRight size={20} />
-      </a>
-      <a href="teste">
-        <img src="https://avatars2.githubusercontent.com/u/64341830?s=460&u=f804c15dcb7958e6651ab000093c6685c0ab7e45&v=4" alt="Luis Carlos" />
+  return (
+    <>
+      <img src={logoImg} alt="Github Explorer" />
+      <Title>Explore repositórios no Github</Title>
 
-        <div>
-          <strong>Happy-Backend</strong>
-          <p>Backend developed on the 3rd of the next level week of Rocketseat.</p>
-        </div>
+      <Form onSubmit={handleAddRepository}>
+        <input
+          value={newRepo}
+          onChange={(e) => setNewRepo(e.target.value)}
+          placeholder="Digite o nome repositório"
+        />
+        <button type="submit">Pesquisar</button>
+      </Form>
 
-        <FiChevronRight size={20} />
-      </a>
-    </Repositories>
-  </>
-);
+      <Repositories>
+        {repositories.map((repository) => (
+          <a key={repository.full_name} href="teste">
+            <img src={repository.owner.avatar_url} alt={repository.owner.login} />
+
+            <div>
+              <strong>{repository.full_name}</strong>
+              <p>{repository.description}</p>
+            </div>
+
+            <FiChevronRight size={20} />
+          </a>
+        ))}
+      </Repositories>
+    </>
+  );
+};
 
 export default Dashboard;
